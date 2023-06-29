@@ -50,7 +50,7 @@ func main() {
 	if len(os.Args) > 1 {
 		if os.Args[1] == "install" {
 			s.Install()
-			gologs.GetLogger("default").Info("服务安装成功")
+			gologs.GetLogger("default").Info("服务安装成功" + global.AppConf.Name)
 			return
 		}
 
