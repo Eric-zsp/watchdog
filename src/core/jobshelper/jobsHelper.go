@@ -1,4 +1,4 @@
-package jobshelper
+package jobsHelper
 
 import (
 	"errors"
