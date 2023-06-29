@@ -1,0 +1,165 @@
+logs:
+  - {
+    name: default,
+    adapter : console,
+    formatter: '%w %t | %F:%n>> %m',
+    conf: {
+      level: info,
+    }
+  }   
+  # - {
+  #   name: default,
+  #   adapter : file,
+  #   formatter: '%w %t | %F:%n>> %m' ,
+  #   conf: {
+  #     filename: ./logs/default/default.log, #保存的文件名
+  #     maxsize: 1, #文件大小限制,单位MB
+  #     maxbackups: 10 , #最大保留日志文件数量
+  #     level : info , #日志保存的时候的级别，默认是 debug 级别
+  #     compress: false #压缩存储
+  #   }     
+  # }  
+  - {
+    name: gin,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/gin/gin.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }    
+  - {
+    name: SerialPortClient,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/SerialPortClient/SerialPortClient.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }    
+  - {
+    name: sendInqueriyData,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/sendInqueriyData/sendInqueriyData.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }     
+  - {
+    name: receiveInqueriyData,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/receiveInqueriyData/receiveInqueriyData.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }     
+  - {
+    name: inqueriyTaskPointData,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/inqueriyTaskPointData/inqueriyTaskPointData.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }     
+  - {
+    name: tcpServer,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/tcpServer/tcpServer.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }     
+  - {
+    name: modbusTcpServerReviceConnect,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/modbusTcpServerReviceConnect/modbusTcpServerReviceConnect.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }     
+  - {
+    name: tcpClient,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/tcpClient/tcpClient.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }     
+  - {
+    name: WebApiRequest,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/WebApiRequest/WebApiRequest.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }     
+  - {
+    name: TimeInterceptor,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/TimeInterceptor/TimeInterceptor.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }      
+  - {
+    name: debugRecord,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/debugRecord/debugRecord.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }       
+  - {
+    name: sendOutPutData,
+    adapter : file,
+    formatter: '%w %t | %F:%n>> %m' ,
+    conf: {
+      filename: ./logs/sendOutPutData/sendOutPutData.log, #保存的文件名
+      maxsize: 1, #文件大小限制,单位MB
+      maxbackups: 10 , #最大保留日志文件数量
+      level : debug , #日志保存的时候的级别，默认是 debug 级别
+      compress: false #压缩存储
+    }     
+  }   
