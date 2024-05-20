@@ -1,9 +1,13 @@
 package main
 
 import (
+	"flag"
 	"os"
+	"os/exec"
+	"runtime"
 
 	"github.com/Eric-zsp/watchdog/src/core/global"
+	"github.com/Eric-zsp/watchdog/src/core/handle"
 	"github.com/Eric-zsp/watchdog/src/core/jobs"
 	gologs "github.com/cn-joyconn/gologs"
 	"github.com/cn-joyconn/goutils/filetool"
@@ -52,12 +56,40 @@ func main() {
 			s.Install()
 			gologs.GetLogger("default").Info("服务安装成功" + global.AppConf.Name)
 			return
-		}
-
-		if os.Args[1] == "remove" {
+		} else if os.Args[1] == "remove" {
 			s.Uninstall()
 			gologs.GetLogger("default").Info("服务卸载成功")
 			return
+		} else {
+			// 标记
+			var tags string
+			// 代理行为
+			var agent string
+			// 服务名称
+			var svrID string
+			// 服务根目录
+			var baseDir string
+			// 服务下载包url
+			var durl string
+			// 文件、目录替换清单
+			var listPath string
+
+			flag.StringVar(&tags, "tags", "", "标记")
+			flag.StringVar(&agent, "agent", "", "代理行为")
+			flag.StringVar(&svrID, "svrID", "", "服务名称")
+			flag.StringVar(&baseDir, "baseDir", "", "服务根目录")
+			flag.StringVar(&durl, "url", "", "服务下载包url")
+			flag.StringVar(&listPath, "listPath", "", "文件、目录替换清单")
+			flag.Parse()
+
+			gologs.GetLogger("default").Sugar().Info("启动参数：-tags=", tags, " -agent=", agent, " -svrID=", svrID, " -baseDir=", baseDir, " -durl=", durl, " -listPath=", listPath)
+			if agent == "appRestart" {
+				app_restart(svrID)
+				return
+			} else if agent == "appUpdate" {
+				app_update(svrID, baseDir, durl, listPath)
+				return
+			}
 		}
 	}
 
@@ -65,6 +97,22 @@ func main() {
 	if err != nil {
 		gologs.GetLogger("default").Error(err.Error())
 	}
+}
+
+func app_restart(svrID string) {
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command(global.UpgradeFileDir + "net stop " + svrID + " & net start " + svrID)
+		cmd.Run()
+		// cmd = exec.Command("copy", op.getCurrentCfgDir()+"*", dir)
+	} else {
+		cmd := exec.Command("systemctl restart " + svrID)
+		cmd.Run()
+	}
+}
+
+func app_update(svrID string, baseDir string, durl string, listPath string) {
+	do := &handle.DogUpgradeOP{}
+	do.DoUpgrade(svrID, baseDir, durl, listPath)
 }
 
 func printLogo() {
