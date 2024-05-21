@@ -10,8 +10,9 @@
             "request": "launch",
             "mode": "debug",
             "args": [
-                "-tags","jsoniter",
-                "-agent","appRestart"
+                "-tags","jsoniter"
+                ,"-agent","appRestart"
+                ,"-svrID","power-final-station3"
             ],
             "program": "${workspaceRoot}/main.go",
             "output": "${workspaceRoot}/",

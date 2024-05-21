@@ -9,6 +9,7 @@ import (
 	"github.com/Eric-zsp/watchdog/src/core/global"
 	"github.com/Eric-zsp/watchdog/src/core/handle"
 	"github.com/Eric-zsp/watchdog/src/core/jobs"
+	"github.com/Eric-zsp/watchdog/src/core/utils/files"
 	gologs "github.com/cn-joyconn/gologs"
 	"github.com/cn-joyconn/goutils/filetool"
 	"github.com/kardianos/service"
@@ -48,19 +49,20 @@ func main() {
 	prg := &program{}
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
-		gologs.GetLogger("default").Fatal(err.Error())
+		gologs.GetLogger("default").Sugar().Fatal(err.Error())
 	}
 
 	if len(os.Args) > 1 {
 		if os.Args[1] == "install" {
 			s.Install()
-			gologs.GetLogger("default").Info("服务安装成功" + global.AppConf.Name)
+			gologs.GetLogger("default").Sugar().Info("服务安装成功" + global.AppConf.Name)
 			return
 		} else if os.Args[1] == "remove" {
 			s.Uninstall()
-			gologs.GetLogger("default").Info("服务卸载成功")
+			gologs.GetLogger("default").Sugar().Info("服务卸载成功")
 			return
 		} else {
+
 			// 标记
 			var tags string
 			// 代理行为
@@ -95,28 +97,51 @@ func main() {
 
 	err = s.Run()
 	if err != nil {
-		gologs.GetLogger("default").Error(err.Error())
+		gologs.GetLogger("default").Sugar().Error(err.Error())
 	}
 }
 
 func app_restart(svrID string) {
+	defer func() {
+		if err := recover(); err != nil {
+			gologs.GetLogger("default").Sugar().Error("the agent restart app happen error,the error msg:" + err.(error).Error())
+		}
+	}()
+	gologs.GetLogger("default").Sugar().Info("the agent begin restart app")
+	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd := exec.Command(global.UpgradeFileDir + "net stop " + svrID + " & net start " + svrID)
-		cmd.Run()
-		// cmd = exec.Command("copy", op.getCurrentCfgDir()+"*", dir)
+		// cmdStr := global.WindowsCMDAdminAuth + "net stop " + svrID + " & net start " + svrID
+		cmdStr, e1 := files.SaveFileByes("restart.bat", []byte(global.WindowsCMDAdminAuth+"net stop "+svrID+" & net start "+svrID))
+		if e1 != nil {
+			gologs.GetLogger("default").Sugar().Error("the agent  restarting app happen error,the error msg:" + e1.Error())
+		}
+		gologs.GetLogger("default").Sugar().Info(cmdStr)
+		cmd = exec.Command("cmd.exe", "/C", cmdStr)
 	} else {
-		cmd := exec.Command("systemctl restart " + svrID)
-		cmd.Run()
+		cmdStr := "systemctl restart " + svrID
+		gologs.GetLogger("default").Sugar().Info(cmdStr)
+		cmd = exec.Command("/bin/bash", "-c", cmdStr)
 	}
+	e2 := cmd.Run()
+	if e2 != nil {
+		gologs.GetLogger("default").Sugar().Error("the agent  restarting app happen error,the error msg:" + e2.Error())
+	}
+	gologs.GetLogger("default").Sugar().Info("the agent  restart app finished")
 }
 
 func app_update(svrID string, baseDir string, durl string, listPath string) {
+	defer func() {
+		if err := recover(); err != nil {
+			gologs.GetLogger("default").Sugar().Error("the agent update app happen error,the error msg:" + err.(error).Error())
+		}
+	}()
 	do := &handle.DogUpgradeOP{}
 	do.DoUpgrade(svrID, baseDir, durl, listPath)
+	gologs.GetLogger("default").Sugar().Info("the agent  update app finished")
 }
 
 func printLogo() {
-	gologs.GetLogger("default").Info(edccLogo)
+	gologs.GetLogger("default").Sugar().Info(edccLogo)
 	// gologs.GetLogger("[joyconn] Version: %s, MaxConn: %d, MaxPacketSize: %d\n",
 	// 	utils.GlobalObject.Version,
 	// 	utils.GlobalObject.MaxConn,

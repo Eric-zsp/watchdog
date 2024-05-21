@@ -101,24 +101,33 @@ func (op *DogUpgradeOP) DoUpgrade(svrID string, baseDir string, durl string, lis
 		return e1
 	}
 	gologs.GetLogger("default").Sugar().Info("stop service  ", svrID)
+	var cmdStr string
 	if runtime.GOOS == "windows" {
-		cmd := exec.Command(global.UpgradeFileDir + "net stop " + svrID)
-		cmd.Run()
+		cmdStr = global.WindowsCMDAdminAuth + "net stop " + svrID
 		// cmd = exec.Command("copy", op.getCurrentCfgDir()+"*", dir)
 	} else {
-		cmd := exec.Command("systemctl stop " + svrID)
-		cmd.Run()
+		cmdStr = "systemctl stop " + svrID
 	}
+	cmd := exec.Command(cmdStr)
+	e1 = cmd.Run()
+	if e1 != nil {
+		gologs.GetLogger("default").Sugar().Info("the agent stop app happen error,the error msg:" + e1.Error())
+	}
+
 	gologs.GetLogger("default").Sugar().Info("begin move files   ", svrID)
 	op.moveFiles(svrID, baseDir, listPath)
 	gologs.GetLogger("default").Sugar().Info("begin start service   ", svrID)
 	if runtime.GOOS == "windows" {
-		cmd := exec.Command(global.UpgradeFileDir + "net start " + svrID)
-		cmd.Run()
+		cmdStr = global.WindowsCMDAdminAuth + "net start " + svrID
+
 		// cmd = exec.Command("copy", op.getCurrentCfgDir()+"*", dir)
 	} else {
-		cmd := exec.Command("systemctl start " + svrID)
-		cmd.Run()
+		cmdStr = "systemctl start " + svrID
+	}
+	cmd = exec.Command(cmdStr)
+	e1 = cmd.Run()
+	if e1 != nil {
+		gologs.GetLogger("default").Sugar().Info("the agent start app happen error,the error msg:" + e1.Error())
 	}
 
 	return nil

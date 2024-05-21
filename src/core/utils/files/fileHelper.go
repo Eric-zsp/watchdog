@@ -8,13 +8,30 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"time"
 
 	gologs "github.com/cn-joyconn/gologs"
+	"github.com/cn-joyconn/goutils/filetool"
 )
 
+// @title   保存文件
+//
+//	path 文件路径
+//	bs 保存内容(byte)
+func SaveFileByes(fileName string, bs []byte) (string, error) {
+
+	selfDir := filetool.SelfDir()
+	fullPath := path.Join(selfDir, fileName)
+	_, err := filetool.WriteBytesToFile(fullPath, bs)
+	if err != nil {
+		return "", err
+	}
+	return fullPath, nil
+
+}
 func CopyFile(dstName, srcName string) (written int64, err error) {
 	src, err := os.Open(srcName)
 	if err != nil {
