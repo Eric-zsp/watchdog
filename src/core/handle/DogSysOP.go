@@ -103,31 +103,47 @@ func (op *DogUpgradeOP) DoUpgrade(svrID string, baseDir string, durl string, lis
 	gologs.GetLogger("default").Sugar().Info("stop service  ", svrID)
 	var cmdStr string
 	if runtime.GOOS == "windows" {
-		cmdStr = global.WindowsCMDAdminAuth + "net stop " + svrID
+		cmdStr, e1 := files.SaveFileByes("stopApp.bat", []byte("net stop "+svrID))
+		if e1 != nil {
+			gologs.GetLogger("default").Sugar().Error("the agent  restarting app happen error,the error msg:" + e1.Error())
+		}
+		gologs.GetLogger("default").Sugar().Info(cmdStr)
+		cmd := exec.Command("cmd.exe", "/C", cmdStr)
+		e1 = cmd.Run()
+		if e1 != nil {
+			gologs.GetLogger("default").Sugar().Info("the agent start app happen error,the error msg:" + e1.Error())
+		}
 		// cmd = exec.Command("copy", op.getCurrentCfgDir()+"*", dir)
 	} else {
 		cmdStr = "systemctl stop " + svrID
-	}
-	cmd := exec.Command(cmdStr)
-	e1 = cmd.Run()
-	if e1 != nil {
-		gologs.GetLogger("default").Sugar().Info("the agent stop app happen error,the error msg:" + e1.Error())
+		cmd := exec.Command("/bin/bash", "-c", cmdStr)
+		e1 = cmd.Run()
+		if e1 != nil {
+			gologs.GetLogger("default").Sugar().Info("the agent stop app happen error,the error msg:" + e1.Error())
+		}
 	}
 
 	gologs.GetLogger("default").Sugar().Info("begin move files   ", svrID)
 	op.moveFiles(svrID, baseDir, listPath)
 	gologs.GetLogger("default").Sugar().Info("begin start service   ", svrID)
 	if runtime.GOOS == "windows" {
-		cmdStr = global.WindowsCMDAdminAuth + "net start " + svrID
-
-		// cmd = exec.Command("copy", op.getCurrentCfgDir()+"*", dir)
+		cmdStr, e1 := files.SaveFileByes("startApp.bat", []byte(global.WindowsCMDAdminAuth+"net start "+svrID))
+		if e1 != nil {
+			gologs.GetLogger("default").Sugar().Error("the agent  start app happen error,the error msg:" + e1.Error())
+		}
+		gologs.GetLogger("default").Sugar().Info(cmdStr)
+		cmd := exec.Command("cmd.exe", "/C", cmdStr)
+		e1 = cmd.Run()
+		if e1 != nil {
+			gologs.GetLogger("default").Sugar().Info("the agent start app happen error,the error msg:" + e1.Error())
+		}
 	} else {
 		cmdStr = "systemctl start " + svrID
-	}
-	cmd = exec.Command(cmdStr)
-	e1 = cmd.Run()
-	if e1 != nil {
-		gologs.GetLogger("default").Sugar().Info("the agent start app happen error,the error msg:" + e1.Error())
+		cmd := exec.Command("/bin/bash", "-c", cmdStr)
+		e1 = cmd.Run()
+		if e1 != nil {
+			gologs.GetLogger("default").Sugar().Info("the agent start app happen error,the error msg:" + e1.Error())
+		}
 	}
 
 	return nil

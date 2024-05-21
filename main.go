@@ -111,7 +111,7 @@ func app_restart(svrID string) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		// cmdStr := global.WindowsCMDAdminAuth + "net stop " + svrID + " & net start " + svrID
-		cmdStr, e1 := files.SaveFileByes("restart.bat", []byte(global.WindowsCMDAdminAuth+"net stop "+svrID+" & net start "+svrID))
+		cmdStr, e1 := files.SaveFileByes("restartApp.bat", []byte(global.WindowsCMDAdminAuth+"net stop "+svrID+" & net start "+svrID))
 		if e1 != nil {
 			gologs.GetLogger("default").Sugar().Error("the agent  restarting app happen error,the error msg:" + e1.Error())
 		}
