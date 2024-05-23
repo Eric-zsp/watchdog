@@ -1,8 +1,11 @@
 package handle
 
 import (
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"runtime"
 	"strings"
 
@@ -17,11 +20,11 @@ import (
 type DogUpgradeOP struct{}
 
 func (op *DogUpgradeOP) getSaveUpgradeDir(appName string) string {
-	return filetool.SelfDir() + "/" + global.UpgradeFileDir + "/" + appName
+	return path.Join(filetool.SelfDir(), global.UpgradeFileDir, appName)
 }
 func (op *DogUpgradeOP) getSaveUpgradeFile(appName string) (string, error) {
 	dir := op.getSaveUpgradeDir(appName)
-	result := dir + "/upgrade.zip"
+	result := path.Join(dir, "upgrade.zip")
 	if !filetool.IsExist(dir) {
 		err := os.MkdirAll(dir, 0755)
 		return result, err
@@ -29,10 +32,10 @@ func (op *DogUpgradeOP) getSaveUpgradeFile(appName string) (string, error) {
 	return result, nil
 }
 func (op *DogUpgradeOP) getUpgradeUnzipDir(appName string) string {
-	return op.getSaveUpgradeDir(appName) + "/update/"
+	return path.Join(op.getSaveUpgradeDir(appName), "update")
 }
 func (op *DogUpgradeOP) getUpgradeBackupDir(appName string) string {
-	return op.getSaveUpgradeDir(appName) + "/backup/"
+	return path.Join(op.getSaveUpgradeDir(appName), "backup")
 }
 
 func (op *DogUpgradeOP) unzipDir(appName string) error {
@@ -66,21 +69,31 @@ func (op *DogUpgradeOP) moveFiles(appName string, baseDir string, listPaths stri
 		var backupPath string
 		var upgradePath string
 		backupRoot := op.getUpgradeBackupDir(appName)
+		if filetool.IsExist(backupRoot) {
+			gologs.GetLogger("default").Sugar().Info("backup delete temp dir ", backupRoot)
+			os.RemoveAll(backupRoot)
+		}
 		upgradeRoot := op.getUpgradeUnzipDir(appName)
 		for _, fp := range fpaths {
 			if !strtool.IsBlank(fp) {
 
 				gologs.GetLogger("default").Sugar().Info("replace file ", fp, " ", appName)
-				oldPath = baseDir + fp
-				backupPath = backupRoot + fp
-				upgradePath = upgradeRoot + fp
+				oldPath = path.Join(baseDir, fp)
+				backupPath = path.Join(backupRoot, fp)
+				upgradePath = path.Join(upgradeRoot, fp)
 				if files.IsDirectory(oldPath) {
+					gologs.GetLogger("default").Sugar().Info("CopyDir ", oldPath, " to ", backupPath)
 					files.CopyDir(oldPath, backupPath)
+					gologs.GetLogger("default").Sugar().Info("Remove dir ", oldPath)
 					os.RemoveAll(oldPath)
-					files.CopyFile(upgradePath, oldPath)
+					gologs.GetLogger("default").Sugar().Info("CopyDir ", upgradePath, " to ", oldPath)
+					files.CopyDir(upgradePath, oldPath)
 				} else {
+					gologs.GetLogger("default").Sugar().Info("CopyFile ", oldPath, " to ", backupPath)
 					files.CopyFile(oldPath, backupPath)
+					gologs.GetLogger("default").Sugar().Info("Remove file", oldPath)
 					os.Remove(oldPath)
+					gologs.GetLogger("default").Sugar().Info("CopyFile ", upgradePath, " to ", oldPath)
 					files.CopyFile(upgradePath, oldPath)
 				}
 			}
@@ -92,9 +105,9 @@ func (op *DogUpgradeOP) moveFiles(appName string, baseDir string, listPaths stri
 func (op *DogUpgradeOP) DoUpgrade(svrID string, baseDir string, durl string, listPath string) error {
 
 	gologs.GetLogger("default").Sugar().Info("DoUpgrade ", svrID)
-	savePath := op.getUpgradeUnzipDir(svrID)
+	savePath, _ := op.getSaveUpgradeFile(svrID)
 	gologs.GetLogger("default").Sugar().Info("begin download ", durl)
-	files.DownLoadFile(durl, savePath)
+	downloadFile(durl, savePath)
 
 	e1 := op.unzipDir(svrID)
 	if e1 != nil {
@@ -103,7 +116,7 @@ func (op *DogUpgradeOP) DoUpgrade(svrID string, baseDir string, durl string, lis
 	gologs.GetLogger("default").Sugar().Info("stop service  ", svrID)
 	var cmdStr string
 	if runtime.GOOS == "windows" {
-		cmdStr, e1 := files.SaveFileByes("stopApp.bat", []byte("net stop "+svrID))
+		cmdStr, e1 := files.SaveFileByes("stopApp.bat", []byte(global.WindowsCMDAdminAuth+"net stop "+svrID))
 		if e1 != nil {
 			gologs.GetLogger("default").Sugar().Error("the agent  restarting app happen error,the error msg:" + e1.Error())
 		}
@@ -113,7 +126,6 @@ func (op *DogUpgradeOP) DoUpgrade(svrID string, baseDir string, durl string, lis
 		if e1 != nil {
 			gologs.GetLogger("default").Sugar().Info("the agent start app happen error,the error msg:" + e1.Error())
 		}
-		// cmd = exec.Command("copy", op.getCurrentCfgDir()+"*", dir)
 	} else {
 		cmdStr = "systemctl stop " + svrID
 		cmd := exec.Command("/bin/bash", "-c", cmdStr)
@@ -147,4 +159,41 @@ func (op *DogUpgradeOP) DoUpgrade(svrID string, baseDir string, durl string, lis
 	}
 
 	return nil
+}
+
+func downloadFile(url, filename string) {
+	// 创建一个新的HTTP请求
+	resp, err := http.Get(url)
+	if err != nil {
+		gologs.GetLogger("default").Sugar().Errorf("Error fetching URL:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// 检查响应状态码是否为200 OK
+	if resp.StatusCode != http.StatusOK {
+		gologs.GetLogger("default").Sugar().Error("Error: Non-200 status code returned")
+		return
+	}
+
+	if filetool.IsExist(filename) {
+		os.Remove(filename)
+	}
+
+	// 创建一个文件用于写入
+	out, err := os.Create(filename)
+	if err != nil {
+		gologs.GetLogger("default").Sugar().Errorf("Error creating file:", err)
+		return
+	}
+	defer out.Close()
+
+	// 将响应体复制到文件中
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		gologs.GetLogger("default").Sugar().Errorf("Error writing to file:", err)
+		return
+	}
+
+	gologs.GetLogger("default").Sugar().Errorf("Successfully downloaded and saved the file:", filename)
 }

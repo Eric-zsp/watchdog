@@ -11,8 +11,15 @@
             "mode": "debug",
             "args": [
                 "-tags","jsoniter"
-                ,"-agent","appRestart"
+                
+                // ,"-agent","appRestart"
+                // ,"-svrID","power-final-station3"
+
+                ,"-agent","appUpdate"
                 ,"-svrID","power-final-station3"
+                ,"-baseDir","d:\\PowerFinalStation3"
+                ,"-url","http://114.115.207.134:8015/file/finalstation/dist-2.2.1.zip"
+                ,"-listPath","lib,resources/cn,resources/config,resources/templates,iot-app-powerMonitor-finalstation-3.0-SNAPSHOT.jar"
             ],
             "program": "${workspaceRoot}/main.go",
             "output": "${workspaceRoot}/",

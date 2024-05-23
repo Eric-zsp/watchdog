@@ -1,1 +1,1 @@
-.\watchdog.exe install
+%~dp0watchdog.exe install

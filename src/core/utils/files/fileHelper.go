@@ -32,59 +32,88 @@ func SaveFileByes(fileName string, bs []byte) (string, error) {
 	return fullPath, nil
 
 }
-func CopyFile(dstName, srcName string) (written int64, err error) {
-	src, err := os.Open(srcName)
-	if err != nil {
-		return
-	}
-	defer src.Close()
-	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return
-	}
-	defer dst.Close()
-	return io.Copy(dst, src)
-}
 
-// copyDir 复制整个目录
-func CopyDir(src, dst string) error {
-	err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+// func CopyFile(dstName, srcName string) (written int64, err error) {
+// 	src, err := os.Open(srcName)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer src.Close()
+// 	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0644)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer dst.Close()
+// 	return io.Copy(dst, src)
+// }
 
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
+// // copyDir 复制整个目录
+// func CopyDir(src, dst string) error {
+// 	err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+// 		if err != nil {
+// 			return err
+// 		}
 
-		dstPath := filepath.Join(dst, relPath)
+// 		relPath, err := filepath.Rel(src, path)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		if info.IsDir() {
-			return os.MkdirAll(dstPath, info.Mode())
-		} else {
-			// 检查是否可以写入，如果不能，尝试获取写权限
-			if err := os.Chmod(dstPath, info.Mode()); err != nil && !os.IsExist(err) {
-				return err
-			}
-			_, err = CopyFile(path, dstPath)
-			return err
-		}
-	})
-	return err
-}
+// 		dstPath := filepath.Join(dst, relPath)
+
+// 		if info.IsDir() {
+// 			return os.MkdirAll(dstPath, info.Mode())
+// 		} else {
+// 			// 检查是否可以写入，如果不能，尝试获取写权限
+// 			// if err := os.Chmod(dstPath, info.Mode()); err != nil && !os.IsExist(err) {
+// 			// 	return err
+// 			// }
+// 			_, err = CopyFile(path, dstPath)
+// 			return err
+// 		}
+// 	})
+// 	return err
+// }
 
 func IsDirectory(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
 		// 如果路径不存在或者有其他错误，这里会返回相应的错误信息
-		fmt.Printf("Error accessing path: %v\n", err)
+		gologs.GetLogger("default").Sugar().Error("Error accessing path: %v\n", err)
 		return false
 	}
 	return info.IsDir()
 }
+func DownLoadFile2(url string, destPath string) error {
+	// 创建一个HTTP GET请求
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to start download: %v", err)
+	}
+	defer resp.Body.Close()
 
-func DownLoadFile(durl string, savePath string) {
+	// 检查HTTP响应状态
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("download failed with status: %s", resp.Status)
+	}
+
+	// 打开目标文件，准备写入
+	out, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %v", err)
+	}
+	defer out.Close()
+
+	// 将响应体的内容复制到输出文件
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("error writing to output file: %v", err)
+	}
+
+	fmt.Printf("Successfully downloaded %s\n", destPath)
+	return nil
+}
+func DownLoadFile1(durl string, savePath string) {
 	_, err := url.ParseRequestURI(durl)
 	if err != nil {
 		panic("网址错误")
@@ -151,9 +180,9 @@ func DownLoadFile(durl string, savePath string) {
 	for {
 		select {
 		case <-ticker.C:
-			speed := written - lastWtn
-			gologs.GetLogger("default").Sugar().Info("[*] Speed %s / %s \n", bytesToSize(speed), spaceTime.String())
-			if written-lastWtn == 0 {
+			// speed := written - lastWtn
+			// gologs.GetLogger("default").Sugar().Info("[*] Speed %s / %s \n", bytesToSize(speed), spaceTime.String())
+			if written-lastWtn <= 0 {
 				ticker.Stop()
 				stop = true
 				break
@@ -174,4 +203,65 @@ func bytesToSize(length int) string {
 	i := math.Floor(math.Log(float64(length)) / math.Log(float64(k)))
 	r := float64(length) / math.Pow(float64(k), i)
 	return strconv.FormatFloat(r, 'f', 3, 64) + " " + sizes[int(i)]
+}
+
+// CopyFile copies the contents of the file named src to the file named dst.
+// If dst doesn't exist, it's created. If src and dst are the same file, CopyFile returns nil.
+func CopyFile(src, dst string) error {
+	sf, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sf.Close()
+
+	df, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer df.Close()
+
+	_, err = io.Copy(df, sf)
+	return err
+}
+
+// CopyDir recursively copies a directory tree, attempting to preserve permissions.
+// Source directory must exist, destination directory must not.
+func CopyDir(src, dst string) error {
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if !srcInfo.IsDir() {
+		return fmt.Errorf("%s is not a directory", src)
+	}
+
+	err = os.MkdirAll(dst, srcInfo.Mode())
+	if err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		if entry.IsDir() {
+			err = CopyDir(srcPath, dstPath)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = CopyFile(srcPath, dstPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

@@ -1,0 +1,8 @@
+
+### 103.添加用户信息
+POST http://127.0.0.1:7788/api/app/agent/restart HTTP/1.1
+Content-Type : multipart/form-data
+
+{
+  "svrID":"1"
+}

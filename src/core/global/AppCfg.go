@@ -39,6 +39,7 @@ type AppConfig struct {
 	Name        string    `json:"name" yaml:"name"`               //应用名称
 	DisplayName string    `json:"displayName" yaml:"displayName"` //服务显示名称
 	Description string    `json:"description" yaml:"description"` //服务描述
+	WebPort     int       `json:"webport" yaml:"webport"`         //web服务监听端口
 	Services    []Service `json:"services" yaml:"services"`       //监测的服务
 }
 
@@ -56,15 +57,18 @@ func InitAppConf(configPath string) {
 			return
 		}
 		gologs.GetLogger("default").Info("成功读取" + configPath + "文件")
-		var appconfigs AppConfig
-		err = yaml.Unmarshal(configBytes, &appconfigs)
+		// var appconfigs AppConfig
+		_appconfigs := &AppConfig{
+			WebPort: 7788,
+		}
+		err = yaml.Unmarshal(configBytes, _appconfigs)
 		if err != nil {
 			gologs.GetLogger("default").Error("解析" + configPath + "文件失败" + err.Error())
 			return
 		}
 		gologs.GetLogger("default").Info("成功解析" + configPath + "文件")
 		appConfigPath = configPath
-		AppConf = &appconfigs
+		AppConf = _appconfigs
 	} else {
 		gologs.GetLogger("default").Error("未找到" + configPath)
 		return
